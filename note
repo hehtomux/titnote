@@ -1,0 +1,367 @@
+========================================================================
+Métagénomique
+========================================================================
+format fastq:
+
+@ID
+seq
++
+° de cofiance (n°ASCII du symbole -42 (+ c'est élévé mieux c'est)(max 38))
+
+==> utiliser programme fastQC
+
+========================================================================
+
+bowtie
+velvet sur read court (velvet G +velvet H)
++ bandage
+
+
+metagénomiqe= faire read et comparer banque 16S de blast
+updatedb = permet dl banque déja faite format blast
+
+========================================================================
+read= seq lue par appareil
+
+
+
+crée fichier python qui...
+fn=simple.s.fastq
+df=open(fn)
+pl=df.readline()
+pl
+dl=df.readline()
+seq=dl
+df.readline()
+qual=df.readline()
+pl
+seq
+qual
+print("@read1")
+fs=open("/tmp/tutut"."w")
+fs.write("@read1\n")
+fs.write(seq)
+fs.write("+read1\n")
+fs.write(qual)
+fs.tell()
+fs.close
+
+
+
+
+
+readline : lit 1 ligne du fichier et avance a la suivante
+var = readlines : lit tt les lignes restantes du fichier
+var [0]: la première ligne
+len var : donne nb ligne
+seek(3): se place a la 4e ligne (0,1,2,3)
+tell : dit ou on est
+========================================================================
+LIGNES EN COMMUN:
+awk '{print $1,$2}' ?f.out|sort|uniq -d
+========================================================================
+blast db -> .fasta id d'une banque
+========================================================================
+Krona : résultat blast-> graph des espèces en html
+========================================================================
+/opt/ncbi-blast-2.12.0+/bin/blastdbcmd -db #nom_de_la_banque -entry #fichier_de_la_séquence
+========================================================================
+rid="id_de_la_séquence"
+grep $id ?.fa => recherche la séquence dans le fichier foward et backward
+========================================================================
+/opt/ncbi-blast-2.12.0+/bin/blastn -query 16Sexample.fasta -subject merdae.fa -outfmt 7
+========================================================================
+.nal(nucléique) .pal(protéique) = collection de banque(s)
+========================================================================
+awk '/>/ {print}' cumul.fa
+si la ligne commence par ">"
+; = newline
+//{print}
+si la ligne commence par " "   print
+========================================================================
+clustal ou muscle : programme d'alignement multiple
+
+
+faire un awk/python de: prend fichier long et prendre les 5000 premier en 5 fichiers
+ sed awk ==> python
+========================================================================
+rentrer fichier en R
+fn<-nom_fichier
+====
+>fn<-"1f.out"
+>br<-read.table(fn)
+> summary(br)
+> hist(br$V4)
+
+> help("hist")
+
+=======================================================================
+
+
+
+fabrication d'un fichier fastq à partir d'une séquence créé aléatoirement
+
+FastqSimulate <- canu (au final fonctionne pas)
+
+par makenucseq ==> crée une seq aléatoire de 100000 bp random
+
+wget fastqSimulate
+chmod 755 fastqsimulate
+###########################
+seed = nombre aléatoire entre 0 et 1 
+
+puis crée autre seed via fonction ()
+seed 2 = frac((1+5)^5) 
+###########################
+
+
+fastqSimulate -f genome.fa -l 200 -x 10 -o fr -se -seed 122 -em 0 -ei 0 -ed 0
+       -fréférence du génome      -x couverture
+                            -l longueur            -o se nome fr                    -ei/em/ed erreur mutation/insertion/délétion
+        
+
+fr.s.fastq = SE single end
+fr.1 fr.2. fastq = pair end
+fr.i = interleaved
+fr.c = reversed complemented 
+
+
+N50= pour obtennir 50% de la taille
+sed -i 's/#[[:digit:]]$//' projet.i.fastq ===> retire #1 ou #2 car tablet ne gère pas ses caractères , il a besoin que les 2 gènes aies les mm valeurs
+
+couverture en % = nb de lecture des bases (en lisan 1 fois, on a la moitié de tout , 2 fois la moitié de ce qui reste, on arrete a 4 fois) nb estimé moyen du nb de fois qu'une base est lue
+longueur longueur des read
+nb de read 
+
+
+======================================
+makefile ou python
+    fastqSimulate -x % -...
+    seqret 
+    phrap ou velvet
+    infoseq
+    
+======================================
+
+velveth = écrit fichier lisible en graph par velvetg
+
+directory= crée ou prend un dossier pour écrire dedans
+hash_lenght= taille du kmère(impaire)
+
+Longpaired = 30Kbp ===>lecture divergente des séquences
+exp-cov= expected coverage
+long_cov_cutoff= retire les petites couvertures (< valer établie)
+
+
+
+artificial fastq generator 
+insilicoseq
+
+
+
+étudier Tagmentation
+
+
+======================================
+Raid
+-------
+GBOD = écriture disque l'un apres les autre
+raid 0 = miroring= copie sur 2 disque
+stripping = écrit moitié donnée sur 2 disque en mm temps
+raid 4 = mirroring et stripping (min 3 disque mais en perd 1 3 disque de 1T =2T au total) + use diff des disque 
+raid 5= résoud pb usure des disque => tt les disque on des partitions de parité (partition que sert a la "sauvegarde")
+raid 6 = O_O
+
+
+----------------------------
+comment faire un pseudo-disque dans un linux pour apprendre a raid?
+----------------------------
+dd if=/dev/zero of=fakedisk_a bs=1G count=1 ===> crée dossier de 1G remplis de 0 !!! lent
+plus rapide: dd if=/dev/zero of=faka count=1 seek=2M (seek permet d'avancer de 2 millions(Mega) de fois 521 octets  dans le disque ce qui réserve la place dans le disque sans l'écrire +512octets)
+
+losetup = fait croire que des fichiers sont des disques -f attache un disque -D détache le disque -la list all
+for f in /fdisk ; do ; losetup -f *f  ; done 
+      
+/proc/mdstat= statut multidisk
+
+mdadm --create md100 -l 5 (niveau de raid) -n 3 (nb de disque) /dev/loop0 /dev/loop1 /dev/loop2
+on peut mkfs.xfs /dev/md/md100
+on peut mount /dev/md100 /mnt/raid
+
+ mdadm --manage /dev/md/md100 --fail /dev/loop1 ==> met en panne le loop1 dans le raid md100
+
+
+
+=======================================
+transcriptommique = lire adn et déterminer le taux de transcription/ expression d'un gène 
+prefetch => prend fichier SRA
+fastqdump
+
+=======================================
+bowtie = blast mais pour chacun des reads 
+
+-----------------------
+experience ERR1095153 =levure ds 3 experience  les mm (pour compenser les marges d'erreur)
+gene HIS 3, LEU2, URA3, MET15
+----------------------
+/home/tomux/sratoolkit.2.11.1-ubuntu64/bin/fastq-dump --split-spot ERR1095153
+
+"bowtie2-build ../ch3 reflevch3"
+bowtie2 -x reflevch3 --interleaved ERR* -S test.sam -p4 ==> transforme fastq en .sam
+
+opt/bowtie2/bowtie2 -p nb_pro -x genome.inx --sra-acc basename -S outfile
+
+samtools view -b test.sam -o test.bam ==> transfo .sam en .bam  
+samtools sort test.bam -o test.s.bam ==> trie le .bam pour le compresser
+samtools view -C -T ch3 test.s.bam -o x.cram ==> crée cram
+samtools index test.s.bam
+ARS = séquence qui  permet le démarage de la duplication de l'ARN
+
+samtools tview test.s.bam 
+
+
+
+-------------------------------
+Makefile
+
+Makefile -f nom_du_fichier_Makefile -g nb_pinguin
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+cible : dépendance
+    recette
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+TT:=$(wildcard *.txt) ===>fait une liste de tout les *.txt
+        echo(TT) --> listera les tout fichiers .txt
+
+TD:=$(patsubst %.txt,%.txt.gz,$(TT))=====> remplace tout le fichier % .txt par %.txt.gz
+
+quand: 
+nom_fichier: nom_autre_fichier
+    faire command a cette ligne seulement si le nom_autre_fichier est plus récent que nom_fichier
+
+quand:
+go:qqchose ==> défini un objectif
+
+:= =====> attribution de variable
+=  =====> dire d'aller cherche la variable sans spécifique lui atribuer une "valeur"
+
+
+% ==> signifique que... créer des règles génériques (par exemple construire un .o à partir d'un .c) qui se verront appelées par défaut.
+$ ==>   $(nom)= permet de sortir la valeur liée a nom induite par nom=jean ==> nom=jean -> $(nom) -> jean
+        $@ = Le nom de la cible
+        $< = Le nom de la première dépendance
+        $^ = La liste des dépendances
+        $? = La liste des dépendances plus récentes que la cible
+        $* = Le nom du fichier sans suffixe
+@ ==> permettent de désactiver l'écho des lignes de commandes en rajoutant le caractère @ devant la ligne de commande
+
+go : ===> donne l'objectif du programme pour lui dire quand il peut s'arreter
+
+.secondary ===> permet de pas effacer les fichiers considérer comme temporaire
+==================================================================================
+
+fichier metadata == fait correspondre les levures avec leurs mutation, le but est de trouver lesquels ont les mêmes
+
+Ds 48 séquençage y a 3 +16 gènes
+identifier 3 codes correspondant au sauvage
+
+    wt (souche sauvage) quel est code des 3wt + le mapping + nb expression
+
+inventrer en python le fichier .gff
+
+===============================================================================
+useradd -m nom_pseudo
+pwd nom_pseudo
+
+ssh 10.1.120.50
+
+
+scp fichier
+
+==============================================================================
+python lecteur de fasta
+-------------------------
+yield: permet de return les var d'une fonction 1 par une
+
+
+==============================================================================
+Banque de donnée 
+
+MariaDb
+----------------------------------------
+create database nom_de_db ;
+show databases;
+drop database nom_de_database;
+use levure;
+show table; ==> montre tt dans la db ou on est
+create table test (name char(25),chr char(25), deb int);
+
+insert test values ("blu","bli",125600);
+insert test (name.chr) values ("truc","bidule") =====> ecrit que ds les 2 colonnes name et chr
+describe test;
+
+create table brol like test;
+
+drop table test;
+
+delete from
+
+select * from table ===> montre la table
+
+alter table test add primary key (name);
+
+
+mysqldump test > test.dump;
+--
+https://waytolearnx.com/2019/09/liste-des-commandes-mysql.html
+----------------------------------------
+connexion pymysql
+
+
+V=pymysql.connect(host"localhost.....")
+
+variable=V.cursor()
+
+variable.execute("select * from gene")
+
+variable.execute("""insert gene values("genetruc","match",....))
+
+for l in variable.fetchall():
+    print l
+
+for gn,c,d,f in variable.fetchall:
+    print("le gene %s sur le chromsome %s de %i a %i"%(gn,c,d,f)")
+variable.commit ===> pour ecrire les modif
+
+                                                                                                                                                                                                                                                                                            
+
+
+
+
+mysql -h 10.1.XXX.XX -guest -pguest -e''
+
+----------------------------------------
+Git 
+----
+git clone http://..... ==> dl le lien git qq chose
+
+git pull ==> fait une maj
+
+git status
+
+git commit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
